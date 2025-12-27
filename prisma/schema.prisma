@@ -32,8 +32,10 @@ model MessageOutbox {
   scheduledAt DateTime
   sentAt      DateTime?
   attempts    Int       @default(0)
+  lockedAt    DateTime?
+  nextRetryAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, messageType, scheduledAt])
+  @@index([sentAt, scheduledAt, nextRetryAt])
 }

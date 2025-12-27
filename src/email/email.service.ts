@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class EmailService {
   async send(email: string, message: string): Promise<void> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    const timeout = setTimeout(() => controller.abort(), 15_000); // 15 seconds
 
     try {
       const response = await fetch(
