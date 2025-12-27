@@ -83,30 +83,30 @@ describe('UsersService', () => {
   });
 
   it('update should update and reschedule', async () => {
-    const id = '1';
+    const email = 'b@b.com';
     const dto = { firstName: 'Bob' };
     const updated = {
-      id,
+      id: '1',
       firstName: 'Bob',
       birthday: new Date('1990-02-02'),
       timezone: 'UTC',
-      email: 'b@b.com',
+      email,
     };
     prisma.user.update.mockResolvedValue(updated);
 
-    const res = await service.update(id, dto as any);
+    const res = await service.update(email, dto as any);
 
     expect(prisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id } }),
+      expect.objectContaining({ where: { email: email } }),
     );
     expect(message.rescheduleBirthday).toHaveBeenCalledWith(updated);
     expect(res).toBe(updated);
   });
 
   it('remove should delete user', async () => {
-    const id = '1';
+    const email = 'b@b.com';
     prisma.user.delete.mockResolvedValue({});
-    await service.remove(id);
-    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id } });
+    await service.remove(email);
+    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { email } });
   });
 });

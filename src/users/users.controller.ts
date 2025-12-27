@@ -13,13 +13,13 @@ export class UsersController {
     return this.usersService.create(dto);
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  @Put(':email')
+  update(@Param('email') email: string, @Body() dto: UpdateUserDto) {
+    return this.usersService.update(email, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  @Delete(':email')
+  remove(@Param('email') email: string) {
+    return this.usersService.remove(email);
   }
 }

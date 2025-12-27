@@ -22,6 +22,7 @@ export class CreateUserDto {
   timezone: string;
 
   @ApiProperty({ example: 'john.doe@email.com' })
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 }

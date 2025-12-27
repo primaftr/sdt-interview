@@ -101,9 +101,11 @@ describe('App (e2e)', () => {
     });
   });
 
-  it('DELETE /user/:id -> deletes user', async () => {
+  it('DELETE /user/:email -> deletes user', async () => {
     prismaMock.user.delete.mockResolvedValueOnce({});
-    await request(app.getHttpServer()).delete('/user/1').expect(200);
-    expect(prismaMock.user.delete).toHaveBeenCalledWith({ where: { id: '1' } });
+    await request(app.getHttpServer()).delete('/user/a@b.com').expect(200);
+    expect(prismaMock.user.delete).toHaveBeenCalledWith({
+      where: { email: 'a@b.com' },
+    });
   });
 });
