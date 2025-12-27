@@ -1,3 +1,8 @@
+jest.mock('p-limit', () => {
+  // export as default to match `import pLimit from 'p-limit'`
+  return { default: jest.fn().mockImplementation(() => (fn: any) => fn()) };
+});
+
 import { MessageScheduler } from './messages.scheduler';
 
 describe('MessageScheduler', () => {
@@ -7,8 +12,9 @@ describe('MessageScheduler', () => {
 
   beforeEach(() => {
     mockPrisma = {
+      // $transaction will be mocked per-test to provide a tx with $queryRaw
+      $transaction: jest.fn(),
       messageOutbox: {
-        findMany: jest.fn(),
         update: jest.fn(),
       },
       user: {
@@ -23,15 +29,20 @@ describe('MessageScheduler', () => {
     scheduler = new MessageScheduler(mockPrisma, mockEmail);
   });
 
-  it('process() should send email and mark sentAt when user exists, and increment attempts when user missing', async () => {
+  it('processBatch() should send email and mark sentAt when user exists, and increment attempts when user missing', async () => {
     const now = new Date();
 
     const messages = [
       { id: 1, userId: 10, scheduledAt: now, sentAt: null },
       { id: 2, userId: 20, scheduledAt: now, sentAt: null },
     ];
-
-    mockPrisma.messageOutbox.findMany.mockResolvedValue(messages);
+    // mock the transaction to call the provided callback with a tx-like object
+    mockPrisma.$transaction.mockImplementationOnce(async (fn: any) =>
+      fn({
+        $queryRaw: jest.fn().mockResolvedValue(messages),
+        messageOutbox: { updateMany: jest.fn() },
+      }),
+    );
 
     mockPrisma.user.findUnique.mockImplementation(
       ({ where: { id } }: { where: { id: number } }) => {
@@ -45,12 +56,11 @@ describe('MessageScheduler', () => {
         return null;
       },
     );
-
     mockEmail.send.mockResolvedValue(undefined);
 
-    await scheduler.process();
+    await scheduler.processBatch();
 
-    expect(mockPrisma.messageOutbox.findMany).toHaveBeenCalled();
+    expect(mockPrisma.$transaction).toHaveBeenCalled();
 
     expect(mockEmail.send).toHaveBeenCalledWith(
       'a@example.com',
@@ -59,20 +69,29 @@ describe('MessageScheduler', () => {
 
     expect(mockPrisma.messageOutbox.update).toHaveBeenCalledWith({
       where: { id: 1 },
-      data: { sentAt: expect.any(Date) },
+      data: { sentAt: expect.any(Date), lockedAt: null },
     });
 
     expect(mockPrisma.messageOutbox.update).toHaveBeenCalledWith({
       where: { id: 2 },
-      data: { attempts: { increment: 1 } },
+      data: {
+        attempts: { increment: 1 },
+        nextRetryAt: expect.any(Date),
+        lockedAt: null,
+      },
     });
   });
 
-  it('process() should increment attempts when sending email throws', async () => {
+  it('processBatch() should increment attempts when sending email throws', async () => {
     const now = new Date();
     const messages = [{ id: 3, userId: 30, scheduledAt: now, sentAt: null }];
+    mockPrisma.$transaction.mockImplementationOnce(async (fn: any) =>
+      fn({
+        $queryRaw: jest.fn().mockResolvedValue(messages),
+        messageOutbox: { updateMany: jest.fn() },
+      }),
+    );
 
-    mockPrisma.messageOutbox.findMany.mockResolvedValue(messages);
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 30,
       email: 'b@example.com',
@@ -82,7 +101,7 @@ describe('MessageScheduler', () => {
 
     mockEmail.send.mockRejectedValue(new Error('SMTP down'));
 
-    await scheduler.process();
+    await scheduler.processBatch();
 
     expect(mockEmail.send).toHaveBeenCalledWith(
       'b@example.com',
@@ -91,7 +110,11 @@ describe('MessageScheduler', () => {
 
     expect(mockPrisma.messageOutbox.update).toHaveBeenCalledWith({
       where: { id: 3 },
-      data: { attempts: { increment: 1 } },
+      data: {
+        attempts: { increment: 1 },
+        nextRetryAt: expect.any(Date),
+        lockedAt: null,
+      },
     });
   });
 });

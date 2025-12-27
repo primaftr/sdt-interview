@@ -11,6 +11,11 @@ if (!(global as any).crypto) {
   (global as any).crypto = nodeWebcrypto as unknown;
 }
 
+jest.mock('p-limit', () => {
+  // export as default to match `import pLimit from 'p-limit'`
+  return { default: jest.fn().mockImplementation(() => (fn: any) => fn()) };
+});
+
 describe('App (e2e)', () => {
   let app: INestApplication;
   let prismaMock: any;
