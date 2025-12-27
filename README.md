@@ -1,73 +1,194 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+  <a href="http://nestjs.com/" target="blank">
+    <img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" />
+  </a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
+<p align="center">
+  <strong>Birthday Notification Service</strong><br/>
+  A scalable backend service built with NestJS, Prisma 7, and PostgreSQL
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📌 Overview
 
-## Installation
+This project is a **Birthday Notification Service** that sends a birthday email to users at  
+**09:00 AM in their local timezone**, regardless of where they live.
 
-```bash
-$ npm install
-```
+It is designed with **production-grade patterns** and focuses on:
 
-## Running the app
+- correctness
+- scalability
+- fault tolerance
+- clean architecture
 
-```bash
-# development
-$ npm run start
+---
 
-# watch mode
-$ npm run start:dev
+## Running the App
 
-# production mode
-$ npm run start:prod
-```
+### Prerequisites
 
-## Test
+- Docker & Docker Compose
+- Node.js 20+ (only required for local runs)
+
+### Run with Docker (recommended)
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up --build
 ```
 
-## Support
+Application will be available at:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```text
+http://localhost:3000
+```
 
-## Stay in touch
+This will:
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Start PostgreSQL
+2. Run Prisma migrations
+3. Start the NestJS app
 
-## License
+### Run Locally (without Docker)
 
-Nest is [MIT licensed](LICENSE).
+```bash
+npm install
+npx prisma migrate deploy
+npm run start:dev
+```
+
+---
+
+## Running Tests
+
+### Unit & Integration Tests
+
+```bash
+npm run test
+```
+
+---
+
+## Running E2E Tests
+
+Ensure the database is running and migrations are applied.
+
+### With Docker Running
+
+```bash
+npm run test:e2e
+```
+
+### Local Setup
+
+```bash
+npx prisma migrate deploy
+npm run test:e2e
+```
+
+## ✨ Features
+
+- ✅ Create, update, and delete users
+- ✅ Email sent at **09:00 local time** per user
+- ✅ IANA timezone support (`Asia/Jakarta`, `Australia/Melbourne`, etc.)
+- ✅ Exactly-once email delivery (no duplicates)
+- ✅ Exponential backoff for retries
+- ✅ Database outbox pattern
+- ✅ Distributed locking with PostgreSQL
+- ✅ Batch processing + controlled parallelism
+- ✅ Prisma 7 with driver adapters
+- ✅ Swagger / OpenAPI enabled
+- ✅ Docker & Docker Compose setup
+- ✅ Migration job container
+
+---
+
+## 🧱 Tech Stack
+
+- **Node.js 24**
+- **NestJS**
+- **Prisma 7**
+- **PostgreSQL**
+- **Docker & Docker Compose**
+- **Luxon** (timezone handling)
+
+---
+
+## 🏗 High-Level Architecture
+
+```
+Client
+  │
+  ▼
+NestJS API (Users)
+  │
+  ▼
+Message Outbox (PostgreSQL)
+  │
+  ▼
+Worker (Scheduler)
+  │
+  ▼
+External Email Service
+```
+
+---
+
+## 📡 API Endpoints
+
+### Create user
+
+```
+POST /user
+```
+
+### Update user
+
+```
+PUT /user/:email
+```
+
+### Delete user
+
+```
+DELETE /user/:email
+```
+
+### Swagger (OpenAPI)
+
+```
+http://localhost:3000/api
+```
+
+---
+
+## 🧪 Validation Rules
+
+- Email must be valid and **unique**
+- Birthday must be a **past date**
+- Timezone must be a **valid IANA timezone**
+- Unknown fields are rejected
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@db:5432/sdt
+```
+
+---
+
+## 🔁 Background Processing
+
+Birthday emails are sent by a **worker** that:
+
+- Processes messages in **bounded batches**
+- Uses **distributed database locking**
+- Applies **exponential backoff**
+- Limits concurrent email sends
+
+This allows the system to safely handle **hundreds of thousands to millions of messages**.
